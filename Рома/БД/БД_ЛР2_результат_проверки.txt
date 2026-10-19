@@ -1,0 +1,47 @@
+INSERT 0 4
+INSERT 0 4
+INSERT 0 3
+INSERT 0 2
+INSERT 0 5
+INSERT 0 2
+INSERT 0 2
+INSERT 0 2
+INSERT 0 5
+INSERT 0 5
+--- Ошибочные вставки (каждая должна быть отклонена) ---
+1) Корпус в составе платы в количестве 0
+psql:data_tests.sql:42: ERROR:  new row for relation "product_part" violates check constraint "product_part_quantity_check"
+DETAIL:  Failing row contains (3, 2, 0).
+2) Блок питания входит в собственный корпус (цикл состава)
+psql:data_tests.sql:44: ERROR:  Цикл в составе: изделие входит само в себя
+CONTEXT:  PL/pgSQL function check_part() line 9 at RAISE
+3) Второй сборочный чертёж блока питания
+psql:data_tests.sql:47: ERROR:  duplicate key value violates unique constraint "document_product_id_doc_code_key"
+DETAIL:  Key (product_id, doc_code)=(1, СБ) already exists.
+4) Изменение схемы блока по извещению КБ-3
+psql:data_tests.sql:49: ERROR:  Извещение выпущено не разработчиком изделия
+CONTEXT:  PL/pgSQL function check_change() line 9 at RAISE
+5) Изменение 3 схемы при отсутствии изменения 2
+psql:data_tests.sql:51: ERROR:  Номер изменения должен быть следующим
+CONTEXT:  PL/pgSQL function check_change() line 17 at RAISE
+6) Кравец О. Н. проверяет собственную схему
+psql:data_tests.sql:53: ERROR:  Разработчик не может проверять свой документ
+CONTEXT:  PL/pgSQL function check_signature() line 9 at RAISE
+7) Подписка несуществующего подразделения 999
+psql:data_tests.sql:55: ERROR:  insert or update on table "subscription" violates foreign key constraint "subscription_dept_code_fkey"
+DETAIL:  Key (dept_code)=(999) is not present in table "department".
+--- Итог: строки таблиц ---
+      document      | change_no |  notice_no  | change_date 
+--------------------+-----------+-------------+-------------
+ НПГУ.436234.012 СП |         1 | НПГУ.012-26 | 2026-09-16
+ НПГУ.436234.012 Э3 |         1 | НПГУ.012-26 | 2026-09-16
+(2 rows)
+
+     role      |   full_name    | sign_date  
+---------------+----------------+------------
+ Разработал    | Кравец О. Н.   | 2026-03-02
+ Проверил      | Белова Т. Ю.   | 2026-03-04
+ Нормоконтроль | Савицкая Л. М. | 2026-03-06
+ Утвердил      | Жук А. П.      | 2026-03-10
+(4 rows)
+
